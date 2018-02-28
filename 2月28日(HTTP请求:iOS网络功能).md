@@ -46,5 +46,60 @@ HTTP请求包含3部分:请求行,请求头与请求体.
 * 响应头:响应头之间通过回车/换行符进行分割.每个头都包含了关于响应的元数据,包括数据的上一次修改时间,客户端可以缓存数据多长时间,数据的编码方式以及在随后的请求中提交的状态信息.
 * 响应体:是通过空行与响应头凤隔开来的.响应体可以包含任意数量的二进制字符.
 
+## 高层iOS HTTP API
+
+* 同步: 启动线程的代码会阻塞,直到整个响应加载完毕并且返回到调用方法为止.该技术最容易实现，不过局限性也最大.
+* 队列式异步:起始代码创建一个请求,并将其放到一个队列中以在后台线程执行.
+* 异步:起始代码开启一个请求,该请求运行在起始线程中,不过在请求处理时会调用委托方法.该技术实现最为复杂,不过灵活性也是最大的.
+
+每种请求都有自己的方式和最佳实践,但所有3个请求都由相同的4个对象构成.
+
+### 所有的请求类型共用的对象
+
+这三类请求会共用4类对象:`NSURL`,`NSURLRequest`,`NSURLConnection(NSURLSession)`和`NSURLResponse`.
+
+#### NSURL
+可以通过`NSURL`对象轻松管理`URL`值并且访问`URL`指向的内容.可以引用文件或者是网络资源,而代码的行为是一样的.主要的差别在于如果引用的是网络资源,那么就会在后台线程中执行代码,这样在数据加载时用户界面就不会暂停下来.
+
+#### NSURLRequest && NSMutableURLRequest
+有两种方式可以向`NSURLRequest`提供`HTTP`体.
+* 一种方式是通过`NSMutableURLRequest`的`setHTTPBody`的方式(在内存中)
+* 另一种是通过`NSInputStream`输入流的方式提供请求体`HTTPBodyStream`,而无需将整个体加载到内存中.
+* 如果发送诸如照片或视频等大量内容,那么使用输入流是最佳选择.
+
+
+#### NSURLConnection(iOS9 被废弃 使用NSURLSession)
+![](https://ws4.sinaimg.cn/large/006tNc79gy1fowjrrwrodj30ko083n1g.jpg)
+
+#### NSURLResponse
+`NSURLResponse`对象会在`URL`加载请求完毕后返回.
+![](https://ws1.sinaimg.cn/large/006tNc79gy1fowjvt4gy5j30kb0em42w.jpg)
+
+`URL`加载系统提供了一个名为`NSHTTPURLResponse`的`NSURLResponse`子类,它包含特定于`HTTP`请求的属性.该类对于确定`HTTP`请求的结果是必须的.
+* 响应头(allHeaderFields):该属性返回响应头值的`NSDictionary`对象.
+* HTTP状态码(statusCode).
+
+### 同步请求
+![](https://ws1.sinaimg.cn/large/006tNc79gy1fowk6xf95aj30kh036gne.jpg)
+
+同步请求的最佳实践
+![](https://ws4.sinaimg.cn/large/006tNc79gy1fowkwapk7cj30ki0kbdml.jpg)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 [TOC]
 
