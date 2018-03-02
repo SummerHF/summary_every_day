@@ -85,32 +85,38 @@ HTTP请求包含3部分:请求行,请求头与请求体.
 同步请求的最佳实践
 ![](https://ws4.sinaimg.cn/large/006tNc79gy1fowkwapk7cj30ki0kbdml.jpg)
 
-### 队列式异步请求
 
-队列式异步请求类似于同步请求.程序提供`NSURLRequest`对象,`URL`加载系统尝试加载请求而不会与调用代码之间存在任何其他的交互.这两种方式之间的主要区别在于`URL`加载系统执行队列式异步请求位于队列中,可能位于后台线程上.
-
-`iOS`提供了一种叫操作队列的设施,名为`NSOperationQueue`.这些队列可以让程序描述待执行的操作,然后以先进先出的顺序提交操作队列执行.队列框架提供了优先级顺序以及根据操作依赖的顺序,不过`URL`加载系统并没有使用这些设施.
-
-#### 队列式异步请求的最佳实践
-
-![](https://ws2.sinaimg.cn/large/006tNc79gy1fox2phjux6j30g809ftac.jpg)
-
-### 异步请求
-异步请求使用与同步和队列式异步请求相同的对象,只不过又增加了另一个对象,即`NSURLConnectionDelegate`
-图3-4展示了与`HTTP`请求过程相关的委托调用序列.协议处理器在`HTTP`协议过程中处理时,会在连接的重要阶段调用委托方法.
-
-![](https://ws2.sinaimg.cn/large/006tNc79gy1fox2vl2c9tj30ea0ff74x.jpg)
 
 ### 异步请求与运行循环
-![](https://ws1.sinaimg.cn/large/006tNc79gy1fox3qju3glj30gw08qjs7.jpg)
 
+异步请求需要运行循环.当数据传递到服务器或是被客户端接收时,运行循环用于实现事件与委托对象之间的通信.异步请求在发出时,会在当前线程的运行循环上操作.这个细节很重要,因为在`GCD块`或者是通过`NSOperationQueue`创建的线程并没有运行循环.因此,如果在后台线程上发出了异步请求,那么还需要确定线程是有运行循环还是使用了别的运行循环.如果不想在主运行循环中执行异步请求,那么需要在另一个线程上创建运行循环,然后针对这个新创建的运行循环进行循环调度连接
 
+#### 异步请求的最佳实践
+![](https://ws2.sinaimg.cn/large/006tNc79ly1foxoqvy0z7j30ka072go8.jpg)
 
+##高级HTTP操作
+![](https://ws1.sinaimg.cn/large/006tNc79ly1foxowycah4j30le05zjug.jpg)
 
+###使用请求方法
+根据定义,`GET`请求不应该包含`HTTP`体,而只应该包含请求行与请求头.
+使用`Post`请求向服务器发送`XML`或`JSON`数据.
+使用`HEAD`请求会指示`HTTP`服务器只返回关于所请求资源的`HTTP`头信息.`HEAD`请求通常没有请求体,也没有响应体返回.它们常常用于验证缓存的数据与服务器上的数据,同时又不必获取缓存资源的整个内容.
 
+### 操纵Cookie
+![](https://ws2.sinaimg.cn/large/006tNc79gy1foxpf62fpzj30l2038dho.jpg)
 
+从服务器发送的`Cookie`有几个属性用于确定`Cookie`值,何时返回到服务器以及客户端应该保留`Cookie`的时间.
 
+这些属性有:
+![](https://ws1.sinaimg.cn/large/006tNc79gy1foxpqszdntj30kl0ikwmg.jpg)
 
+应用中经常要用到`Cookie`的3个地方:
+* 检索`Cookie`
+* 显示删除`Cookie`
+* 以及手工将`Cookie`添加到请求中.
+![](https://ws4.sinaimg.cn/large/006tNc79ly1foxpwbnk2dj30kx04r770.jpg)
+
+`URL`加载系统提供了两个重要对象以管理`Cookie`:`NSHTTPCookie`与`NSHTTPCookieStorage`.
 
 [TOC]
 
