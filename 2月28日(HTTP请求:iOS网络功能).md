@@ -85,13 +85,24 @@ HTTP请求包含3部分:请求行,请求头与请求体.
 同步请求的最佳实践
 ![](https://ws4.sinaimg.cn/large/006tNc79gy1fowkwapk7cj30ki0kbdml.jpg)
 
+### 队列式异步请求
 
+队列式异步请求类似于同步请求.程序提供`NSURLRequest`对象,`URL`加载系统尝试加载请求而不会与调用代码之间存在任何其他的交互.这两种方式之间的主要区别在于`URL`加载系统执行队列式异步请求位于队列中,可能位于后台线程上.
 
+`iOS`提供了一种叫操作队列的设施,名为`NSOperationQueue`.这些队列可以让程序描述待执行的操作,然后以先进先出的顺序提交操作队列执行.队列框架提供了优先级顺序以及根据操作依赖的顺序,不过`URL`加载系统并没有使用这些设施.
 
+#### 队列式异步请求的最佳实践
 
+![](https://ws2.sinaimg.cn/large/006tNc79gy1fox2phjux6j30g809ftac.jpg)
 
+### 异步请求
+异步请求使用与同步和队列式异步请求相同的对象,只不过又增加了另一个对象,即`NSURLConnectionDelegate`
+图3-4展示了与`HTTP`请求过程相关的委托调用序列.协议处理器在`HTTP`协议过程中处理时,会在连接的重要阶段调用委托方法.
 
+![](https://ws2.sinaimg.cn/large/006tNc79gy1fox2vl2c9tj30ea0ff74x.jpg)
 
+### 异步请求与运行循环
+![](https://ws1.sinaimg.cn/large/006tNc79gy1fox3qju3glj30gw08qjs7.jpg)
 
 
 
