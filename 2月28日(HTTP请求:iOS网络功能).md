@@ -118,5 +118,7 @@ HTTP请求包含3部分:请求行,请求头与请求体.
 
 `URL`加载系统提供了两个重要对象以管理`Cookie`:`NSHTTPCookie`与`NSHTTPCookieStorage`.
 
+
+
 [TOC]
 
