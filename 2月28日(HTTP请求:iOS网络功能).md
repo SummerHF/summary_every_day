@@ -141,5 +141,134 @@ HTTP请求包含3部分:请求行,请求头与请求体.
 }
 ```
 
+####删除Cookie
+![](https://ws2.sinaimg.cn/large/006tKfTcgy1fp3favr2eqj30l603ktap.jpg)
+
+
+```
+-(void)deleteAllCookies {
+    NSHTTPCookieStorage * jar = [NSHTTPCookieStorage sharedHTTPCookieStorage];
+    NSArray * storedCookies = jar.cookies;
+    for (NSHTTPCookie * cookie in storedCookies) {
+        [jar deleteCookie:cookie];
+    }
+    [[NSUserDefaults standardUserDefaults] synchronize];
+}
+```
+代码可以组合使用`Cookie`属性,有选择的删除`Cookie`. 对于目标域来说,`Cookie`的名字是唯一的
+
+```
+-(void)deleteCookie:(NSString *)cookieName url:(NSURL *)url {
+    NSHTTPCookieStorage * jar = [NSHTTPCookieStorage sharedHTTPCookieStorage];
+    NSArray * storedCookie = [jar cookiesForURL:url];
+    for (NSHTTPCookie * cookie in storedCookie) {
+        if ([cookieName isEqualToString:cookie.name]) {
+            [jar deleteCookie:cookie];
+        }
+    }
+}
+```
+
+确定针对某个域返回哪些`Cookie`会考虑该域的全局`cookies`以及特定主机的`Cookie`,下表展示了域与子域的映射规则.
+![]()
+
+###创建Cookie
+我们可以创建`Cookie`并以编程的方式添加到请求或`Cookie`存储中.如果想要手工创建`Cookie`以遵循`Web`应用的独有协议,那么这就十分必要.有时还需要接收域的`Cookie`,然后创建相同的`Cookie`并发送给另一个域.
+
+#### 创建Cookie并添加到请求中
+
+```
+-(void)createCookie {
+    NSURL * url = [NSURL URLWithString:@"www.Foo.com"];
+    NSDictionary * properties = [NSDictionary
+                                 dictionaryWithObjectsAndKeys:
+                                 @"Foo",NSHTTPCookieName,
+                                 @"this is foo",NSHTTPCookieValue,
+                                 @"/",NSHTTPCookiePath,
+                                 url,NSHTTPCookieOriginURL
+                                 ,nil];
+    NSHTTPCookie * cookie = [NSHTTPCookie cookieWithProperties:properties];
+    NSMutableURLRequest * request = [NSMutableURLRequest requestWithURL:url];
+    NSArray * newCookies = [NSArray arrayWithObject:cookie];
+    NSDictionary * newHeaders = [NSHTTPCookie requestHeaderFieldsWithCookies:newCookies];
+    [request setAllHTTPHeaderFields:newHeaders];
+}
+```
+
+这种方式设置的`Cookie`,会将`Cookie`添加到随后所有的请求中去 
+
+```
+-(void)createCookie {
+    NSURL * url = [NSURL URLWithString:@"www.Foo.com"];
+    NSDictionary * properties = [NSDictionary
+                                 dictionaryWithObjectsAndKeys:
+                                 @"Foo",NSHTTPCookieName,
+                                 @"this is foo",NSHTTPCookieValue,
+                                 @"/",NSHTTPCookiePath,
+                                 url,NSHTTPCookieOriginURL
+                                 ,nil];
+    NSHTTPCookie * cookie = [NSHTTPCookie cookieWithProperties:properties];    
+    [[NSHTTPCookieStorage sharedHTTPCookieStorage] setCookie:cookie];
+}
+```
+
+请记住,如果`Cookie`存储接收策略有限制,那么`Cookie`可能不会被存储进去.
+存储完`Cookie`之后,新的请求在开始执行时会自动将其从`Cookie`存储中取出来/
+
+###头信息操作进阶
+除了操纵请求体与随请求头发送的`Cookie`外,我们常常还会向请求添加头,或是从请求中删除头以及查看响应中的头信息.
+
+####添加请求头
+当代码需要修改请求头时,需要创建`NSMutableURLRequest`对象而不是`NSURLRequest`对象.`NSMutableURLRequest`提供了两种修改请求头:一次一个头以及替换所有头.之前的`Cookie`示例就通过该方法向请求添加`Cookie`.如果代码需要根据动态的数据来添加头,那么该方法就很有用了.还可以将头逐个添加到请求中.
+
+```
+    NSMutableURLRequest * request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"www.baidu.com"]];
+    /// HTTP协议规定头的名字要以冒号结束,不过如果省略的话,该方法会附加一个冒号
+    [request addValue:@"en" forHTTPHeaderField:@"Content-Language"];
+```
+
+#### 删除请求头
+有时需要从请求中删除头,比如,如果应用想要禁用对返回数据的压缩,那么可以覆写默认的`iOS`头(默认的头支持`gzip`或`DEFLATE压缩`) 
+`DEFLATE`是同时使用了`LZ77算法`与`哈夫曼编码（Huffman Coding）`的一个无损数据压缩算法
+
+```
+    NSMutableURLRequest * request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"www.baidu.com"]];
+    /// Accept-Encoding: gzip, deflate 这会告诉服务器,可以对返回的响应体进行压缩
+    [request setValue:@"" forHTTPHeaderField:@"Accept-Encoding"];
+```
+`URL`加载系统`API`并未提供完全删除请求中标准头的方式,最好的方式就是使用空值覆写默认值.
+#### 查看响应头
+当`HTTP`请求完成且没有错误时,可能不包含头,也可能包含多个头.
+
+```
+    NSURLRequest * request = [NSURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData timeoutInterval:30.0];
+    NSHTTPURLResponse * response;
+    NSError * error = nil;
+    NSData * data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
+    if (error != nil) {
+        NSLog(@"Error on load = %@",error.localizedDescription);
+        return  nil;
+    }
+    NSDictionary * headers = [response allHeaderFields];
+    NSString * contentType = [headers objectForKey:@"Content-Type"];
+```
+如果响应中包含了相同类型的多个头,那么只会返回一个值.这个返回值是由所有响应值拼接而成的,并使用逗号分隔.
+
+###主要的请求头
+* Accept头: 检查`Accept`头来确定对返回负载的数据编码.
+* Authorization: 可以与认证证书一起来避免对来自服务器的响应进行认证检查. `Basic`认证的安全性不如`Base64`编码的密码,这意味着只能在`HTTPS`连接上使用这种方式.
+* User-Agent: 创建它的目的是为`HTTP`服务器识别出浏览器类型.在很多企业网络中,`user-agent`值用于根据客户端类型将访问转向特定的服务器.
+
+
+
+
+
+
+
+
+
+
+
+
 [TOC]
 
