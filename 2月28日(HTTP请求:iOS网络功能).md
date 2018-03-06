@@ -117,8 +117,29 @@ HTTP请求包含3部分:请求行,请求头与请求体.
 ![](https://ws4.sinaimg.cn/large/006tNc79ly1foxpwbnk2dj30kx04r770.jpg)
 
 `URL`加载系统提供了两个重要对象以管理`Cookie`:`NSHTTPCookie`与`NSHTTPCookieStorage`.
+`NSHTTPCookie`通过所有必要以及可选属性来表示`Cookie`.`NSHTTPCookieStorage`则是单例对象,用于管理应用的`Cookie`.注意,与所有其他的应用数据一样,`NSHTTPCookieStorage Cookie`也是沙箱的,无法在应用间共享.
+![](https://ws2.sinaimg.cn/large/006tKfTcgy1fp2t3inidpj30h709aabm.jpg)
 
+#### 从响应中获取Cookie 
+从响应中获取`Cookie`,然后根据名字查找特定的`Cookie`是很常见的事情.
 
+```
+-(void)getCookie {
+    NSURL * url = [NSURL URLWithString:@"http://www.baidu.com"];
+    NSMutableURLRequest * request = [[NSMutableURLRequest alloc] initWithURL:url];
+    NSHTTPURLResponse * response;
+    NSError * error;
+    NSData * data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
+    NSDictionary * headers = [response allHeaderFields];
+    NSArray * cookies = [NSHTTPCookie cookiesWithResponseHeaderFields:headers forURL:url];
+    for (NSHTTPCookie * cookie in cookies) {
+        NSLog(@"Cookie: %@", cookie);
+        if ([cookie.name isEqualToString:@"JSEES"]) {
+            NSLog(@"Found the session id");
+        }
+    }
+}
+```
 
 [TOC]
 
