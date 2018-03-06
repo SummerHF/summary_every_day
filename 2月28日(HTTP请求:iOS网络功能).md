@@ -170,7 +170,7 @@ HTTP请求包含3部分:请求行,请求头与请求体.
 ```
 
 确定针对某个域返回哪些`Cookie`会考虑该域的全局`cookies`以及特定主机的`Cookie`,下表展示了域与子域的映射规则.
-![]()
+![](https://ws2.sinaimg.cn/large/006tKfTcgy1fp3hmqnft4j30ks05ft97.jpg)
 
 ###创建Cookie
 我们可以创建`Cookie`并以编程的方式添加到请求或`Cookie`存储中.如果想要手工创建`Cookie`以遵循`Web`应用的独有协议,那么这就十分必要.有时还需要接收域的`Cookie`,然后创建相同的`Cookie`并发送给另一个域.
