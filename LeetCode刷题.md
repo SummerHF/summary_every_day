@@ -28,11 +28,15 @@ Explanation: 342 + 465 = 807.
 
 class Solution {
     func addTwoNumbers(_ l1: ListNode?, _ l2: ListNode?) -> ListNode? {
+        let resultList = ListNode(0)
+        var tempList = resultList
+        var tempL1 = l1
+        var tempL2 = l2
         var carry = 0
-        let resultNode = ListNode(0)
-        var countA = 0 
+        
+        var countA = 0
         var countB = 0
-        var temL1 = l1, temL2 = l2
+        
         if var tempL1 = l1 {
             while tempL1.next != nil {
                 countA += 1
@@ -45,57 +49,59 @@ class Solution {
                 tempL2 = tempL2.next!
             }
         }
+        
+        //// 线性表长度比较
+        
         if countA >= countB {
-             temL1 = l1
-             temL2 = l2
+             tempL1 = l1
+             tempL2 = l2
         }else {
-             temL1 = l2
-             temL2 = l1
+             tempL1 = l2
+             tempL2 = l1
         }
-        var tempNode = resultNode
-        while let nodeOne = temL1 {
-            let node = ListNode(0)
-            if  let nodeTwo  = temL2 {
-                let sum = nodeOne.val + nodeTwo.val
-                tempNode.val = (sum % 10 ) + carry
-                /// 是否产生了进位
-                carry = sum >= 10 ? 1:0
-                if nodeOne.next != nil || nodeTwo.next != nil  {
-                    tempNode.next = node
-                    tempNode = node
-                    temL1 = nodeOne.next
-                    temL2 = nodeTwo.next
-                }else {
-                    /// 为空并且产生了进位
+        
+        while let L1 = tempL1 {
+            if let L2 = tempL2 {
+                tempList.val = ( L1.val + L2.val + carry ) % 10
+                carry = ( L1.val + L2.val + carry ) >= 10 ? 1:0
+                tempL1 = L1.next
+                tempL2 = L2.next
+                if tempL1 == nil {
                     if carry == 1 {
-                        node.next = nil
-                        node.val = carry
-                        tempNode.next = node
-                        tempNode = node
+                         let node = ListNode(1)
+                         node.next = nil
+                         tempList.next = node
+                         tempList = node 
+                    }else {
+                         tempList.next = nil
                     }
-                    break 
+                } else {
+                    let node = ListNode(0)
+                    node.next = nil
+                    tempList.next = node
+                    tempList = node
                 }
             }else {
-                if nodeOne.next == nil && carry == 1 {
-                    tempNode.val = (nodeOne.val + carry) % 10  
-                    let node = ListNode(0)
-                    if (nodeOne.val + carry) >= 10 {
-                        carry = 1 
-                        tempNode.next = node 
-                        tempNode = node 
-                    }else {
-                        carry = 0 
-                        tempNode.next = nil 
+                tempList.val = (L1.val + carry) % 10
+                carry = (L1.val + carry) >= 10 ? 1:0
+                tempL1 = L1.next
+                if tempL1 == nil {
+                    if carry == 1 {
+                         let node = ListNode(1)
+                         node.next = nil
+                         tempList.next = node
+                         tempList = node 
                     }
                 }else {
-                    tempNode.val = (nodeOne.val + carry) % 10 
-                    tempNode.next = nodeOne
-                    tempNode = nodeOne
+                    let node = ListNode(0)
+                    node.next = nil
+                    tempList.next = node
+                    tempList = node 
+
                 }
-                temL1 = nodeOne.next 
             }
-         }
-        return resultNode
+        }
+        return resultList
     }
 }
 ```
