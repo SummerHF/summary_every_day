@@ -1,5 +1,5 @@
 #LeetCode刷题
-## Add Two Numbers
+## 1.Add Two Numbers
 You are given two non-empty linked lists representing two non-negative integers. The digits are stored in reverse order and each of their nodes contain a single digit. Add the two numbers and return it as a linked list.
 You may assume the two numbers do not contain any leading zero, except the number 0 itself.
 
@@ -106,4 +106,19 @@ class Solution {
 }
 ```
 
+## 2.Longest Substring Without Repeating Characters
+Given a string, find the length of the longest substring without repeating characters.
+
+###Examples
+
+```
+Given "abcabcbb", the answer is "abc", which the length is 3.
+Given "bbbbb", the answer is "b", with the length of 1.
+Given "pwwkew", the answer is "wke", with the length of 3. Note that the answer must be a substring, "pwke" is a subsequenceand not a substring.
+
+```
+
+####Code
+
+[TOC]
 
