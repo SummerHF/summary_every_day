@@ -118,7 +118,49 @@ Given "pwwkew", the answer is "wke", with the length of 3. Note that the answe
 
 ```
 
-####Code
+###Code
+
+## 3.Reverse Integer
+Given a 32-bit signed integer, reverse digits of an integer.
+
+###Examples
+#### Example 1:
+
+```
+Input: 123
+Output:  321
+
+```
+####Example 2:
+```
+Input: -123
+Output: -321
+
+```
+####Example 3:
+
+```
+Input: 120
+Output: 21
+
+```
+###Code
+
+```c
+int reverse(int x) {
+    /// 使用长整形保证了在运算过程中不会溢出 计算完成后在与临界值比较 判断是否溢出
+    long long var = 0;
+    while (x != 0) {
+        var = var * 10 + x % 10;
+        if (var > INT_MAX || var < INT_MIN) {
+            return 0;
+        }
+        x /= 10;
+    }
+    return var;
+}
+
+```
 
 [TOC]
 
