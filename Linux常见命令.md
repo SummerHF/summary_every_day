@@ -170,12 +170,52 @@ ifconfig | grep inet: 查看ip地址
 ```
 Linux中想要终止终端命令: control + c 
 ```
+##SSH(基础)
+通过`ssh客户端`我们可以连接到运行了`ssh服务器`的远程机器上
+`ssh`是目前较可靠,专为远程登录会话和其他网络服务提供安全性的协议
+
+* 域名
+	通过`ip`地址找到网络上的计算机, `ip`地址的别名,方便用户记忆
+* 端口号
+	通过`端口号`可以找到计算机上运行的应用程序
+	
+```
+服务              端口号
+SSH服务器         22
+Web服务器         80
+HTTPS            443
+FTP              21
+```
 
 
+##SSH客户端的基础使用
+
+```
+ssh [-p port] user@remote
+```
+* `user`: 是在远程机器上的用户名 如果不指定那么就是当前用户名
+* `port`: `SSH Server监听的端口`,如果不指定,就为默认值`22`
+* `remote`: 是远程机器的地址
+* 提示: 使用`exit`退出当前用户的登录
 
 
+```
+ssh root@47.97.222.102 -i /Users/hero/Desktop/阿里云密钥/summer.pem 
+
+```
+
+###Windows下使用putty xsheel
+
+###scp
+* `scp`就是一个`secure copy`,是一个在`linux`下用来进行`远程拷贝文件`的命令
+* 它的地址格式与`ssh`基本相同 需要注意的是 指定端口的是用大写`P`, `-P`
 
 
+```
+# 把本地当前目录下的01.py文件复制到远程家目录下的Desktop/01.py
+scp [-P port] 01.py user@remote!Desktop/01.py
+```
 
+scp 01.py root@47.97.222.102 -i 阿里云密钥/summer.pem!/test
 
 
