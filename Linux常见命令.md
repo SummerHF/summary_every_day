@@ -212,10 +212,34 @@ ssh root@47.97.222.102 -i /Users/hero/Desktop/阿里云密钥/summer.pem
 
 
 ```
-# 把本地当前目录下的01.py文件复制到远程家目录下的Desktop/01.py
-scp [-P port] 01.py user@remote!Desktop/01.py
+# 把本地当前目录下的01.py文件复制到远程家目录
+scp [-P port] [源文件] user@remote:[远程目录] .
+scp 01.py root@47.97.222.102:/test/01.py
+# 把远程文件复制到本地
+scp [-P port] user@remote:[远程目录] [本地文件]. 
+scp root@47.97.222.102:/test/01.py /Users/hero/Desktop/alibaba.py
+```
+`-r`: 复制文件夹
+
+```
+复制本地目录到远程
+scp -r demo user@remote:[远程目录]  
+
 ```
 
-scp 01.py root@47.97.222.102 -i 阿里云密钥/summer.pem!/test
+```
+复制本地文件到
+```
+scp -P 22 -r root@47.97.222.102:/test demo
+
+
+###SSH高级
+* 免密码登录
+
+
+* 配置别名
+
+提示：有关`SSH`配置信息都保存在用户家目录下的`.ssh`目录下
+
 
 
