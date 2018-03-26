@@ -1,4 +1,6 @@
+
 #LeetCode刷题
+[TOC]
 ## 1.Add Two Numbers
 You are given two non-empty linked lists representing two non-negative integers. The digits are stored in reverse order and each of their nodes contain a single digit. Add the two numbers and return it as a linked list.
 You may assume the two numbers do not contain any leading zero, except the number 0 itself.
@@ -124,7 +126,7 @@ Given "pwwkew", the answer is "wke", with the length of 3. Note that the answe
 Given a 32-bit signed integer, reverse digits of an integer.
 
 ###Examples
-#### Example 1:
+####Example 1:
 
 ```
 Input: 123
@@ -162,5 +164,70 @@ int reverse(int x) {
 
 ```
 
-[TOC]
+## 4.Merge Two Sorted Lists
+Merge two sorted linked lists and return it as a new list. The new list should be made by splicing together the nodes of the first two lists.
+
+### Examples
+
+```
+Input: 1->2->4, 1->3->4
+Output: 1->1->2->3->4->4
+
+```
+###Code
+方法一:使用迭代的方式
+
+```
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     struct ListNode *next;
+ * };
+ */
+struct ListNode* mergeTwoLists(struct ListNode* l1, struct ListNode* l2) {
+    /// 定义头
+    struct ListNode temp = {0 , NULL};
+    /// 定义头指针
+    struct ListNode * head = &temp;
+    struct ListNode * point = head;
+    while (l1 != NULL && l2 != NULL) {
+        if (l1->val <= l2->val) {
+            point->next = l1;
+            l1 = l1->next;
+        }else {
+            point->next = l2;
+            l2 = l2->next;
+        }
+        point = point->next;
+    }
+    if (l1 != NULL) {
+        point->next = l1;
+    } else if (l2 != NULL){
+        point->next = l2;
+    }
+    return head->next;
+}
+```
+方法二:使用递归的方法
+```
+struct ListNode* mergeTwoLists(struct ListNode* l1, struct ListNode* l2) {
+    if (l1 == NULL) return l2;
+    if (l2 == NULL) return l1;
+
+    struct ListNode * handler = NULL;
+    if (l1->val < l2->val) {
+        handler = l1;
+        handler->next = mergeTwoLists(l1->next, l2);
+    }else {
+        handler = l2;
+        handler->next = mergeTwoLists(l1, l2->next);
+    }
+    return handler;
+}
+```
+
+
+
+
 
