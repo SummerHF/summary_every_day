@@ -321,5 +321,40 @@ su是substitute user的缩写,表示使用另外一个用户的身份
 sudo命令用来以其他身份来执行命令,预设的身份为root
 ```
 
-###66
+##组管理终端命令(非重点)
+
+```
+创建组/删除组的终端命令 都需要使用`sudo`命令
+Linux下
+groupadd 组名				添加组
+groupdel 组名	         删除组
+cat /etc/gruop         确认组信
+sudo chgrp -R 组名 文件/目录名 递归修改文件/目录的所属组
+Mac下
+sudo dscl . -create /Users/<user>
+dscl . list /users  /// 查看用户
+sudo dscl . -delete /Users/redis
+sudo dscl . -create /Users/<user> UserShell /bin/bash
+sudo dscl . -create /Users/<user> RealName "<realName>"
+sudo dscl . -create /Users/<user> UniqueID "<userID>"
+sudo dscl . -create /Users/<user> PrimaryGroupID <groupID>
+sudo dscl . -create /Users/<user> NFSHomeDirectory /Users/<user>
+sudo dscl . -passwd /Users/<user> <passwd>
+sudo dscl . -append /Groups/admin GroupMembership <user>
+```
+群组默认对家目录没有写权限
+
+创建用户/设置密码/删除用户
+```
+useradd -m -g         建立新用户           -m:自动建立用户家目录, -g: 指定用户所在的组,否则会建立一个同名的组 
+passwd用户名         设置用户密码         如果是普通用户直接可以使用password可以修改自己的账户密码	
+userdel -r <用户名>                     删除用户		
+```
+## 查看用户信息
+
+```
+id[用户名]: 查看用户UID(用户代号)和GID(组代号)信息
+```
+
+##72
 
