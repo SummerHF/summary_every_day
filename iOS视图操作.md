@@ -71,4 +71,42 @@ kCAFilterNearest       /// 双线性滤波算法
 kCAFilterLinear       ///  最近过滤算法 
 ```
 
+##专用图层
+###CAShapeLayer
+###CATextLayer
+它以图层的形式包含了`UILable`几乎所有的绘制特性,并且额外提供了一些新的特性.同时,`CATextLayer`也要比`UILable`渲染的快的多.
+###CATransformLayer
+###CAEmitterLayer
+高性能的粒子引擎,`CAEmitterLayer`被用来创建实时例子动画.如烟雾,火,雨...`CAEmitterLayer`看上去像是许多`CAEmitterCell`的容器,这些`CAEmitterCell`定义了一个例子效果.
+###CAEAGLLayer
+它是`CALayer`的一个字类,用来显示任意的`OpenGL`图形
+###AVPlayerLayer
+
+##隐式动画
+###事务
+但当你改变一个属性,`Core Animation`是如何判断动画类型和持续时间的咧?实际上动画执行的时间
+取决于当前事物的设置,动画类型取决于图层行为.
+
+事务是通过`CATransaction`类来做管理.
+使用`begin`和`commit`分别来入栈或者出栈
+
+`Core Animation`在每一个`run loop`周期中自动开始一次新的事务,`run loop`是`iOS`负责收集用户输入,处理定时器或者网络事件并去重新绘制屏幕的东西.
+
+###图层行为
+
+
+##显示动画
+###CABasicAnimation
+###CAKeyframeAnimation
+`关键帧动画`: 你提供了显著的帧,然后`Core Animation`在每帧之间进行插入.
+###虚拟属性
+不是针对关键路径
+`transform.rotation`
+###动画组
+`CAAnimationGroup`可以将动画组合起来.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+dsdsdsdsd
+
+
+
 
