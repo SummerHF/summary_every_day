@@ -31,3 +31,39 @@
 ###Z坐标轴
 `CALayer`存在于一个三维空间当中,除了我们已经讨论过的`position`和`anchorPoint`属性之外,`CALayer`还有另外两个属性,`zPosition`和`anchorPointZ`,二者都是在`Z`轴上描述位置的浮点类型.
 
+
+### 组透明
+`shouldRasterize`: 栅格化
+
+##视觉效果
+###变换
+我们将要研究可以用来对图层旋转，摆放或者扭曲的`CGAffineTransform`
+以及可以将扁平物体转换为三维空间对象的`CATransform3D`(而不是仅仅对圆角矩形添加下沉阴影)
+
+
+###仿射变换
+
+`CGAffineTransform` 是一个可以和二维空间向量做乘法的3*3矩阵
+
+一个`pi`代表`180度`,`M_PI_4`于是就是`pi`的四分之一就是45度.
+
+###混合变换
+`CGAffineTransform`类型属于`Core Graphics`框架,`Core Graphics`实际上是一个严格意义上的`2D绘图API`,并且`CGAffineTransform`仅仅对`2D`变换有效.
+
+###3D变换
+`CATransform3D`也是一个矩阵,但是和`2*3`的矩阵不同,`CATransform3D`是一个在3维空间内做变换的`4*4`矩阵.
+
+###透视投影
+
+`m34`:用于按照比例缩放`X`和`Y`的值来计算到底要距离视角多远
+
+通过设置`m34`为`-1.0/d`来应用透视效果,`d`代表了想象中视角相机和屏幕之间的距离,以像素为单位.
+
+###灭点
+`sublayerTransform`影响所有的子图层.
+
+###背面
+`CALayer`有一个叫做`doubleSided`的属性来控制图层的背面是否要被绘制.
+
+##扁平化图层
+
