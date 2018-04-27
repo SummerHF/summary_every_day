@@ -227,7 +227,8 @@ int two_dim[][5] = {
 ###指针数组
 
 ```
-int *api[10]
+int *api[10]  /// 指针数组
+int (*api) [10] /// 指向数组的指针 
 ```
 
 ##总结
@@ -240,5 +241,85 @@ int *api[10]
 所有其他字符串都必须存储于字符数组或动态分配的内存中.
 字符串就是一串零或者多个字符串, 并且以一个位模式为全0的`NUL(终止符)`字节结尾.
 `NUL`字节是字符串的终止符, 但他本身并不是字符串的一部分, 所以字符串的长度并不包括`NUL`字节.
+
+
+### 长度受限的字符串函数
+
+```
+#include <string.h>
+
+strcat: 拼接字符串(要确保目标字符串有足够的存储空间， 避免溢出)
+strcmp: 字符串的比较(>0, <0)
+strcpy: 字符串的复制(要确保目标字符串有足够的存储空间， 避免溢出)
+
+```
+
+strncat(<#char *__dst#>, <#const char *__src#>, <#size_t __len#>)
+如果strlen(src)的值大于或者等于等于len, 那么只有len个字符被复制到dst中, 注意, 它的结果将不会以NUL字节结尾.
+
+在使用不受限制的函数之前， 你首先必须确定字符串实际上是以`NUL`字节结尾的.
+
+```
+char buffer[BSIZE];
+strncpy(buffer, name, BSIZE);
+buffer[BSIZE - 1] = '\0';
+如果name的长度可以容纳于buffer中, 最后那个赋值语句没有任何效果.
+但是, 如果name太长, 这条赋值语句可以保证buffer中的字符是以`NUL`结尾的.以后对这个数组使用`strlen`或其他不受限制的字符串函数可以保证其正常工作.
+```
+
+###字符串查找基础
+
+查找特定的字符最容易的方式是使用`strchr`和`strrchr`
+
+```
+	 char string[20] = "hello there honey.";
+    char *ans;
+    /// 指向字符串中该字符第一次出现的位置
+    ans = strchr(string, 'h');
+    printf("%c\n", *ans);
+    /// 指向字符串中该字符最后一次出现的位置
+    ans = strrchr(string, 'h');
+    printf("%c\n", *ans);
+    /// 如果未找到 则返回一个`NULL`指针
+```
+查找一个字串
+
+为了在字符串中查找一个子串, 我们可以使用`strstr`函数, 原型如下:
+如果第二个参数是一个空字符串, 函数就返回s1
+```
+strstr(<#const char *__s1#>, <#const char *__s2#>)
+
+
+    char string[20] = "hello there honey.";
+    char string1[20] = "";
+    char *ans;
+//    ans = strchr(string, 'h');
+//    printf("%c\n", *ans);
+//    ans = strrchr(string, 'h');
+//    printf("%c\n", *ans);
+
+
+    ans = strstr(string, string1);
+    if (ans == NULL) {
+        printf("not find\n");
+    } else {
+        printf("%c\n", *ans);
+    }
+```
+[Understanding “register” keyword in C
+](https://www.geeksforgeeks.org/understanding-register-keyword/)
+
+##register 变量
+寄存器访问要比内存访问快的多， 如果需要频繁的访问某一个变量, 可以将其存储在寄存器中.
+```
+1. 试图访问寄存器变量的地址程序会报错.
+
+There is no good example of register usage when using modern compilers (read: last 15+ years) because it almost never does any good and can do some bad. When you use register, you are telling the compiler "I know how to optimize my code better than you do" which is almost never the case. One of three things can happen when you use register:(即使一个编译器在使用寄存器时产生更好的代码，也没有理由相信另一个编译器也会这样做。如果你有一些关键代码，编译器没有充分优化，那么你最好的选择可能是使用汇编器，但是当然，要先验证生成的代码是一个真正的问题。)
+
+	•	The compiler ignores it, this is most likely. In this case the only harm is that you cannot take the address of the variable in the code.
+	•	The compiler honors your request and as a result the code runs slower.
+	•	The compiler honors your request and the code runs faster, this is the least likely scenario.
+
+```
 
 
