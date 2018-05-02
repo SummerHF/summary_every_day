@@ -28,5 +28,10 @@ Category: assoc, load
 
 [MrPeak杂货铺](http://mrpeak.cn/Archives/)
 [让BAT的Offer不再难拿](https://xiaozhuanlan.com/topic/3147056289)
+[技术博客](https://blog.ibireme.com/)
+[socket](https://github.com/robbiehanson/CocoaAsyncSocket)
+[my slack](https://asyncdisplaykit.slack.com/messages/C0V63R86T/)
+[Texture](http://texturegroup.org/docs/installation.html)
+[Best resources for Advanced iOS Developer (Swift)](https://medium.com/@PavloShadov/best-resources-for-advanced-ios-developer-swift-ade30374593d)
 
 
