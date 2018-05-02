@@ -321,5 +321,313 @@ There is no good example of register usage when using modern compilers (read: la
 	•	The compiler honors your request and the code runs faster, this is the least likely scenario.
 
 ```
+##结构体
+###结构体的声明
 
+```
+struct tag {member-list} variable-list;
+```
+
+
+```
+/// 结构体变量x
+    struct {
+        int a;
+        char b;
+        float c;
+    } x;
+    
+    /// y是一个数组, 包含了20个结构.z是一个指针,它指向这个类型的结构
+    struct {
+        int a;
+        char b;
+        float c;
+    } y[20], *z;
+```
+标签允许多个声明使用同一个成员列表, 并且创建同一种类型的结构.
+
+```c
+/// 这个声明把标签SIMPLE和这个成员列表联系在一起.该声明并没有提供变量列表, 所以它并未创建任何变量. 标签标识了一种模式, 用于声明未来的变量,但无论是标签还是模式本身都不是变量.
+
+struct SIMPLE {
+    int a;
+    char b;
+    float c;
+};
+
+///这些声明使用标签来创建变量, 现在x，y，z都是同一种类型的结构变量.
+struct SIMPLE x;
+struct SIMPLE y[20], *z;
+```
+
+
+```c
+typedef struct {
+    int a;
+    char b;
+    float c;
+} SIMPLE;
+
+/// 这个技巧和声明一个结构标签的效果几乎相同, 区别在于SIMPLE现在是一个类型名, 而不是一个标签名.
+SIMPLE x;
+SIMPLE y[20], *z;
+
+```
+### 结构成员的直接访问
+
+```c
+struct SIMPLE {
+    int a;
+    char b;
+    float c;
+};
+
+struct COMPLEX {
+    float f;
+    int a[20];
+    long *lp;
+    struct SIMPLE s;
+    struct SIMPLE sa[10];
+    struct SIMPLE *sp;
+};
+```
+
+结构变量的成员是通过`点(.)`操作符来访问的.左操作数就是结构变量的名字, 右操作数就是需要访问的成员的名字.点操作符的结合性是从左到右.
+
+```
+ struct COMPLEX a;
+ a.s.a = 1;
+ a.sa[4].c
+```
+
+###结构成员的间接访问
+如果你拥有一个指向结构体的指针，那么你该怎么访问结构体的成员咧？
+你可以使用间接访问操作符`*`来访问这个结构体, 然后再使用`.`操作符来访问这个结构体的成员。因为`.`操作符的优先级要高于间接访问操作符的优先级,所以你得使用`()`，例如如下的函数
+
+```c
+struct COMPLEX {
+    float f;
+    int a[20];
+    long *lp;
+    struct SIMPLE s;
+    struct SIMPLE sa[10];
+    struct SIMPLE *sp;
+};
+
+/// 函数的参数是一个指向结构体的指针
+void func1(struct COMPLEX * const p) {
+    struct COMPLEX * temp = p;
+    /// 向下面这样来访问结构体的成员
+    (*temp).f
+}
+```
+更好的一种方式是使用箭头操作符, 箭头操作符接收两个操作数, 但是左操作数必须是一个指向结构的指针。箭头操作符对左操作数执行间接访问以获取结构体,右操作数来访问相应的成员.
+
+```c
+struct COMPLEX {
+    float f;
+    int a[20];
+    long *lp;
+    struct SIMPLE s;
+    struct SIMPLE sa[10];
+    struct SIMPLE *sp;
+};
+
+/// 函数的参数是一个指向结构体的指针
+void func1(struct COMPLEX * const p) {
+    struct COMPLEX * temp = p;
+    /// 使用箭头操作符来访问成员,间接访问操作内建于箭头操作符中，所以不需要显示的执行间接访问或者使用括号.
+    temp->f
+}
+```
+###结构的自引用
+
+```c
+/// 非常声明 结构体b递归声明, 无止境
+struct SELF_REF1 {
+    int a;
+    struct SELF_REF1 b;
+    int c;
+};
+/// 合法声明
+/// 包含一个指向结构体类型的指针
+struct SELF_REF1 {
+    int a;
+    struct SELF_REF1 *b;
+    int c;
+};
+```
+如果你觉得一个结构体内部包含一个指向该结构本身的指针有些奇怪, 请记住它实际上指向的是`同一种类型的不同结构`.
+
+警惕下面的陷阱
+
+```c
+
+/// Unknown type name 'SELF_REF1'
+/// 类型名直到声明的末尾才定义, 所以在结构体内部它尚未定义
+typedef struct {
+    int a;
+    SELF_REF1 *b;
+    int c;
+} SELF_REF1;
+
+/// 解决方法添加标签名
+typedef struct SELF_REF1 {
+    int a;
+    struct SELF_REF1 *b;
+    int c;
+} SELF_REF;
+
+```
+###不完整的声明(WHY
+```
+```)
+
+```c
+struct B;
+
+struct A {
+    struct B * partner;
+};
+
+struct B {
+    struct A * partner;
+};
+/// 在A的成员列表中需要标签B的不完整的声明, 一旦A被声明之后, B的成员列表也可以被声明.
+```
+
+##结构体的初始化
+
+```c
+typedef struct {
+    int a;
+    char b;
+    float c;
+} SIMPLE;
+
+typedef struct {
+    int a;
+    short b[10];
+    SIMPLE c;
+} VALUE;
+
+/// 初始化方式类似于多维数组
+ VALUE a = {
+        1,
+        {1, 2, 3, 4, 5, 6},
+        {1, 'c', 1.0}
+    };
+    printf("%d\n", a.a);
+```
+
+###结构，指针和成员
+
+```c
+typedef struct {
+    int a;
+    short b[2];
+} EX2;
+
+typedef struct EX{
+    int a;
+    char b[3];
+    /// 结构体成员
+    EX2 c;
+    /// 指向结构体的指针
+    struct EX *d;
+}Ex;
+
+/// 初始化
+    Ex x = {
+      10,
+      "h1",
+        {1, {-1,25}},
+       0
+    };
+    Ex *px = &x;
+    /// 类型不同 不能赋值
+    /// int *pi = px;
+    /// 箭头操作符的优先级要高于&操作符的优先级
+    /// pi和px拥有相同的值，但是它们的类型是不同的
+    int *p1 = &px->a;
+    printf("%p\n",p1);
+    printf("%p\n",px);
+    /// 访问嵌套的结构
+    printf("%d\n",px->c.a);
+    /// p1 0x7ffeefbff5c8
+    /// px 0x7ffeefbff5c8
+     /// 1
+    printf("%d\n",px->c.a);
+    /// -1 
+    printf("%d\n",*px->c.b);
+```
+
+###访问指针成员
+
+```c
+typedef struct {
+    int a;
+    short b[2];
+} EX2;
+
+typedef struct EX{
+    int a;
+    char b[3];
+    /// 结构体成员
+    EX2 c;
+    /// 指向结构体的指针
+    struct EX *d;
+}Ex;
+
+/// 初始化
+    Ex x = {
+      10,
+      "h1",
+        {1, {-1,25}},
+       0
+    };
+    Ex y;
+    x.d = &y;
+    Ex *px = &x;
+    px->d->a = 1;
+```
+
+###结构的存储分配
+编译器按照成员列表的顺序一个接一个的给每个成员分配内存, 只有当存储成员时需要满足正确的边界对其要求时,成员之间才可能出现用于填充的额外空间.例如
+
+```c
+struct ALIGH {
+    char a;
+    int b;
+    char c;
+};
+```
+它的内存布局,假设整型长度为4个字节
+![](https://ws1.sinaimg.cn/large/006tNc79gy1fqxeb7456wj30b001zmx1.jpg)
+
+使用`offsetof`计算偏移量
+
+```c
+#include <stddef.h>
+
+struct ALIGH {
+    int b;
+    char a;
+    char c;
+};
+/// 会偏移5个字节
+    printf("%lu\n", offsetof(struct ALIGH, c));
+    
+    
+    struct ALIGH {
+    char a;
+    int b;
+    char c;
+};
+/// 会偏移8个字节
+    printf("%lu\n", offsetof(struct ALIGH, c));
+```
+![](https://ws2.sinaimg.cn/large/006tNc79gy1fqxekmec8ij30n103874k.jpg)
+
+###作为函数参数的结构(206)
 
