@@ -629,5 +629,142 @@ struct ALIGH {
 ```
 ![](https://ws2.sinaimg.cn/large/006tNc79gy1fqxekmec8ij30n103874k.jpg)
 
-###作为函数参数的结构(206)
+###作为函数参数的结构
+结构变量是一个标量, 它可以用于其他标量可以使用的任何场合. 因此, 把结构作为参数传递给一个函数是合法的, 但这种做法往往并不适宜.
+
+```c
+/// 这个结构占据32个字节的空间
+typedef struct {
+    char  product[20];
+    int   quantity;
+    float price;
+} Transaciton;
+
+void print_receipt( Transaciton trans) {
+     printf("%f\n", trans.price);
+}
+
+void print_receiptLoc( Transaciton *trans ) {
+     printf("%f\n", trans->price);
+}
+
+/// 使用register修饰, 用于把堆栈中的参数(参数首先传递到堆栈)复制到寄存器,以提高指针传递的效率
+/// 使用const修饰结构体, 防止其值被修改
+void print_receiptLocation( register Transaciton const *trans ) {
+    printf("%f\n", trans->price);
+}
+
+
+ Transaciton trans = {
+        {'a', 'b', 'v'},
+        2,
+        1.2
+    };
+  /// 这个方法可以产生正确的结果, 但是效率比较低下. 因为传值调用需要将参数的拷贝传递给函数.
+  print_receipt(trans);
+  /// 传址调用效率能提高很多, 指针比整个结构要小的多, 所以把它压到堆栈上效率能提高很多. 结构越大,把指向它的指针传递给函数的效率也就越高.
+  print_receiptLoc(&trans);
+```
+
+
+
+```c 
+/// 计算总和
+Transaciton compute_total_amout( Transaciton trans) {
+    trans.totalAmount = trans.quantity * trans.price;
+    return trans;
+}
+
+void compute_total_amouts( Transaciton *trans ) {
+    trans->totalAmount = trans->price * trans->quantity;
+}
+
+```
+什么时候你应该向函数传递一个结构而不是指针？
+`answer`: 很少有这种情况, 只有当一个结构特别的小(长度和指针相同或更小), `结构传递方案`的效率才不会输给`指针传递方案`.
+
+##位段
+
+```c   
+有符号数就是用最高位表示符号（正或负），其余位表示数值大小，无符号数则所有位都用于表示数的大小
+
+/// 位段的声明
+/// 位段可以将长度为奇数的数据包装在一起, 节省存储空间.
+struct CHAR {
+    /// 128个不同的字符值
+    unsigned ch     :7;
+    /// 64种不同的字体
+    unsigned font   :6;
+    /// 以及0到524287个单位的长度
+    unsigned size   : 19;
+};
+
+```
+![](https://ws1.sinaimg.cn/large/006tKfTcgy1fqxuxw4em6j30kw05t3yq.jpg)
+结构实现位段的能力.
+
+使用位段只是基于方便的目的, 任何可以用位段实现的任务都可以使用移位和`屏蔽`来实现.
+
+位段的移植性较弱 优点是简化了源代码.
+
+##联合
+联合的声明和结构类似, 但它的行为方式却和结构不同. 联合的所有成员引用的是内存中的相同位置. 当你想在不同的时刻把不同的东西存储于同一个位置时, 就可以使用联合.
+
+```c
+struct VARIABLE {
+    /// 一个变量被创建时, 解释器就创建一个这样的结构并记录变量的类型.然后根据变量的类型将值存储在这三个值字段的其中一个.
+    enum { INT, FLOAT, STRING} type;
+    int int_value;
+    float float_value;
+    char *string_value;
+    /// 效率低下的原因在于它所占用的内存. 每个VARIABLE变量存在两个未使用的值字段。联合就可以减少这种浪费.
+};
+
+struct VARIABLEUNUNION {
+    enum { INT, FLOAT, STRING } type;
+    /// 同一个位置可以用于存储这三种不同类型的值.
+    /// 如果联合的各个成员具有不同的长度, 联合的长度就是它最长成员的长度.
+    union {
+        int i;
+        float f;
+        char *s;
+    }value;
+};
+```
+
+##变体记录
+
+```
+struct PARTNFO {};
+struct SUBASSYINFO {};
+struct INVREC {
+    char partno[10];
+    int quan;
+    enum {PART, SUBASSY} type;
+    /// 在一个成员长度不同的联合里, 分配给联合的内存数量取决于它的最长长度. 如果成员的长度相差悬殊, 当存储较短的成员时, 其浪费的空间是相当可观的. 更好的方法是在联合中存储指向成员的指针而不是直接存储成员本身. 因为指针的长度都是相同的，这样就解决了内存浪费的问题
+    union {
+        struct PARTNFO part;
+        struct SUBASSYINFO subassyinfo;
+    } info;
+};
+```
+
+### 联合的初始化
+
+```
+union {
+        int a;
+        float b;
+        char c[4];
+    }x = {
+        1.999
+    };
+    /// 联合变量可以被初始化, 但这个初始值必须是联合第一个成员的类型,而且它必须位于一对花括号里面.如果给出的初始值是任何其他类型,它就会尝试如果可以的话转换为一个整数并且赋值给x.a
+    printf("%d\n",x.a);
+    printf("%f\n",x.b);
+```
+
+##总结
+位段允许你把长度为奇数的值包裹在一起以节省内存空间.
+
 
