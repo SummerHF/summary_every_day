@@ -51,7 +51,66 @@ Get 空格 res/static/thirdparty/connect.jpg?t=1480992153433 空格 HTTP/1.1\r\n
 ```
 
 ###Request header
+**header**其本质上是一些文本键值对, 一个典型的例子如下图所示:
+![](https://ws2.sinaimg.cn/large/006tKfTcgy1frcbvapn5rj30em04zt8s.jpg)
 
-[URL](http://mrpeak.cn/blog/http-constitution/)
+每个键值对的形式为: **Key: 空格 Value CRLF**
+上面讲述**Request-URI**的时候, 缺失的**Host**就以键值对的形式存在于**header**中,比如:**Host:pan.baidu.com**.
+
+将若干个上述格式的键值对组合起来, 就成了我们HTTP请求完整的**header**.最后一个键值对之后再跟一个**CRLF**, 就表示我们的header结束了.
+
+HTTP本身定义了一些**header key**, 另外也允许开发者添加自己的key,自定义的key一般以X开头,比如定义**X-APP-VERSION**来记录客户端的版本号.
+
+###Request Body
+body里面包含请求的实际数据.
+对于**Method=Get**的请求来说, body是空的,或者说不存在body体,header最后的两个CRLF就标识着请求的结尾.我们一般调用请求的业务参数就是通过**Request Line**当中的**Request-URI**来传递的,比如上述请求中的**?t=1480992153433**, 也就是URL的**query string**部分. 这部分同样是以键值对的形式存在, 不过是位于**Request Line**当中.
+对于**Method=Post**的请求来说, body体一般不为空,我们实际的业务数据都存放于body当中,数据在body中是以何种形式存在的,其实大有门道,后面再细说.至于**Request-URI**的**query string**部分,我们依然可以选择放置一部分数据在其中,但更普遍的做法是使用**body**体.
+
+##HTTP Response
+response的结构和request结构大致相同,可以用下图表示:
+![](https://ws4.sinaimg.cn/large/006tNc79gy1frcd8o8gzqj308308y74d.jpg)
+
+不过是将**Request Line**换成了**Status Line**
+
+**Status Line**的结构如下:
+
+```c
+Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF
+```
+这里关键在于**Status-Code**的记忆, 记住常见的**Status-Code**值,对于我们平时分析网络错误十分有帮助,不需要记住每个值的含义, 只需要理解每个类别的含义即可...
+
+* 1xx: Informational - Request received, continuing process.(收到请求,处理中...)
+* 2xx: Success - The action was successfully received, understood, and accepted.(请求成功接收并被处理)
+* 3xx: Redirection - Further action must be taken in order to complete the request.(重定向-需要更进一步的操作才能完成请求)
+* 4xx: Client Error - The request contains bad syntax or cannot be fulfilled.(客户端错误-请求包含语法错误或者请求不能实现)
+* 5xx: Server Error - The server failed to fulfill an apparently valid request(服务器错误-服务器不能正确的处理合法的请求)
+
+###可以用来携带数据的部分
+分析至此, 我们可以总结一个HTTP请求,哪些地方是用来携带数据的.
+
+**Request Line**当中的**Request-URI**是一个选择,也是标准的GET请求用来传递数据的位置,一般以**query string**的格式存在于**URI**当中.一些浏览器或者**Framework**对于**query string**的长度会有一定的限制, 所以此处不适宜于传递较大的数据.
+
+**header**也是一个选择,我们可以选择协议中的一些标准**header key**,比如Host, User-Agent等,将我们的业务数据存放其Value中.或者我们通过自定义key, 比如上面提到的**X-APP-VERSION**,使用X-开头是业界默认的习惯,虽然[RFC 6648](https://tools.ietf.org/html/rfc6648)当中建议大家不要再使用X-作为prefix,但这一习惯至今仍在延续...
+
+**Body**体是我们的第三个选择,**Post**请求可以根据**Header**中的**Content-type**值, 以不同的形式将数据保存在body体中.
+
+###一些隐藏的细节
+可以看出http是一种基于文本解析的协议, 上面提到的空格(0x20), 回车换行(0x0D,0x0A)都是HTTP用来做文本解析的辅助符号.
+
+**网络分层: 应用层-->表示层-->会话层-->传输层(TCP, UDP...)-->网络层-->数据链路层-->物理层**
+
+解析HTTP的text流程, 其实也比较好理解.一个简化的流程大概是这样: 当我们从TCP层拿到应用层的buffer之后,以CLRF(\r\n)为分隔符, 将整个buffer分成若干行,第一行自然是**Request Line**,之后每一行代表一个**header**,如果遇到两个CLRF,则表示header结束,如果是**Method=post**,读取Header中的**Content-Length**值，最后根据这个值读取固定长度的body体.这样就完成了我们上述三个主要部分的读取.当然,上述是个简化的流程,实际解析场景会更多一些.
+
+####我们再深入看下Request Line的解析
+我们从TCP层拿到的实际上是一个字节流, 要将字节流解析成我们能够阅读交流的形式,我们需要将字节码进行编码和解码.**Request Line**使用的编码格式是**US-ASCLL**,也就是我们平时接触的**ASCLL码**中的一种.
+
+**Request Line**通过**ASCLL码**做还原之后,我们得到的类似这样的结果:
+
+```c
+GET /res/static/thirdparty/connect.jpg?a=1&b=2 HTTP/1.1
+```
+URL的解析也自有一套规范,我们需要特别注意的是**query string**部分.我们平时编写业务代码的时候,可能会在**query string**当中塞入自己的数据,这些数据可能是任意形式的字节流,而**Request Line**和**URI**的解析都依赖于一些特殊字符来做分割,比如空格,/;?等等,所以为了能正确,安全的解析整个**Request Line**和**URI**,我们需要对**query string**中的字节流做进一步的编码约束,只允许其中出现安全的**ASCLL**码,这也是我们为甚么**UriEncode**的原因.
+
+
 
 
