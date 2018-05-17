@@ -1,0 +1,176 @@
+
+有时候, 一个关键字就是一扇通往新世界的大门. 计算机发展到今天, 已经很久没有理论层面的升级了, 现今绝大部分新的知识都是基于已有的内核做包装. 函数式编程不是新生事物, 也不是独立的知识孤岛, 函数式编程核心思想离我们也没有那么远.
+
+**Functional Programming**翻译为函数式编程, 初次接触额时候会不由自主的认为, 这种编程范式的核心在于对**Functional**的理解, 或者说是对函数的理解. 函数我们每天都在写, 还有什么需要特别去理解的吗？我个人觉得是个误区, 相对于理解【函数】，我们更需要理解的其实是【状态】.如果叫做**Stateless Functional Programming**可能会更贴切一点.
+
+##状态
+函数和状态是人人都熟悉的概念, 可越是简单的每日可见的概念, 越难理解的透彻. 说到状态, 很多人会联想到变量, 局部变量, 全局变量, property, model,这些都可以成为状态, 但变量和状态又不是一回事, 要真正理解状态, 得先理解下面一行代码:
+
+```c
+int i = 0
+```
+简单的一行代码, 分析起来却有不少门道：
+【i】就是我们所说的变量, 一个变量可以看作是一个实体, 真实存在于内存空间的实体.【int】是它的类型值, 是对于它的一种约束,类似于上帝对于人类性别的约束, 每个人都需要有性别. 0是它被赋予的一个值, 值是外部信息, 类似于人的职业, 职业不是与生俱来的, 人一生可以选择从事不同的职业.
+
+变量是我们要分析的目标, 它的类型信息, 值信息虽然会约束变量的行为, 但不是我们关注的重点,真正让变量变得危险的是中间的等号, =是个赋值操作, 意味着改变i的值, 原本处于静态的i, 由于一个=发生了改变,它的值发生了变化, 它可以变为1，或者10000，或其他任何值,这个看似简单的改变可以说是我们程序的bug之源,值的变化可以像扔进湖面的石头, 层层叠叠影响其他空间和实体.
+
+一旦一个变量开始与【=】打交道, 一旦变量的值发生变化, 我们就可以说这个变量有了**状态**.或者我们可以说, 有=就有状态.
+
+状态也是个相对的概念,变量都有其生命周期, 一旦变量被回收, 其所包含的状态也随之消失, 所以状态所带来的影响是受限于变量的生命周期的. 可以看下面这段代码: 
+
+```c
+- (int)doNothing {
+	int i = 0;
+	return i;
+}
+```
+[i]是函数**doNothing**内部的临时变量, 分配在内存的栈上, 一旦函数return, i的生命周期也随之结束.
+
+站在**doNothing**函数内部的这个空间范畴来说, i是有状态的， i被赋予了值0, 当return执行之后, i被内存回收了, i随之消失, 其所对应的状态也消失了, 所以一旦出了**doNothing**, i又变得没又状态了.代码虽然执行了**return i**, 但返回的其实是i所代表的值, i将自己的值交出之后, 就完成了自己的使命.
+
+所以站在**doNothing**函数外部空间的角度来说, **doNothing**的使用者是感受不到i的存在的, **doNothing**的调用方可以认为**doNothing**是无状态的(stateless),无状态意味着静止, 静止的事物都是安全的, 飞驰而过的火车和静止的石块,当然是后者感觉更安全.
+
+我们在编写代码的时候会经常谈论状态, 函数的状态, 类的状态, App的状态, 归根结底, 我们所讨论的是: 在某个空间范畴内会发生变化的变量.
+
+函数式编程当中的函数f(x)强调无状态, 其实是强调将状态锁定在函数的内部. 一个函数它不依赖于任何外部的状态, 只依赖于它的入参的值,一旦值确定,这个函数所返回的结果就是确定的.可能有人会觉得入参也是状态, 是外部传入的状态, 其实不然,我前面说过变量才会有状态, 值是没有状态的,入参传入的只是值, 而不是变量.下面两个函数, 一个入参是传值,一个入参是传变量.
+
+```
+/// 值传递, 无状态(值传递)
+- (void)doNothing:(int)v{}
+/// 地址传递, 有状态(传变量)(引用传递)
+- (void)doNothing: (NSMutableArray:)arr
+```
+第二个版本的**doNothing**, 不但是传入了变量. 还是可以变化的变量,是真正意义上的外部状态. 很有可能在你遍历这个arr的时候, 外部某个同事执行的线程正在尝试改变这个arr里的元素, 是不是很危险?
+
+所以对于下面两种调用来说:
+
+```c
+[self doNothing: user.userID];
+[self doNothing: user.friends];
+```
+
+第一个调用只是传入了userID这个值, 第二个调用却传入了friends这个引用变量. 第一个没依赖, 第二个有依赖,第一个没状态, 对调用方来说是安全的, 对整个app来说是安全的, 既避免了依赖外部的状态, 也不修改外部的状态. 即: 不会产生**side effect**, 没有副作用.
+
+所以函数式编程当中的函数, 可以一句话归结为： **隔绝一切外部状态, 传入值, 输出值**.
+我们在来看看函数式编程当中的(pure function)的定义:
+
+```c
+in computer programming, a function may be considered a pure function if both of the following statements about the function hold:
+	1.	The function always evaluates the same result value given the same argument value(s). The function result value cannot depend on any hidden information or state that may change while program execution proceeds or between different executions of the program, nor can it depend on any external input from I/O devices (usually—see below).
+	2.	Evaluation of the result does not cause any semantically observable side effect or output, such as mutation of mutable objects or output to I/O devices (usually—see below).
+
+```
+纯函数即为函数式编程所强调的函数, 上述两点可翻译为:
+1.不依赖外部状态
+2.不改变外部状态
+
+所以对函数式编程当中函数的理解, 最后还是落实到状态的理解, 静止的状态是安全的, 变化的状态是危险的,之所以危险可以从两个维度去理解,**时间**和**空间**.
+
+###时间
+变量一旦有了状态, 它就有可能随着时间而发生变化, 时间是最不可预知的因素, 时间会将我们引至什么样的远方不得而知,我们每创造一个变量, 真正控制它的不是我们, 是时间.
+
+时间的武器是变化, 是赋值, 赋予变量新的值, 在不可预知的未来埋下隐患.
+
+```c
+- (void)setUserName: (NSString*)name {
+  // before assignment
+  _userName = name;
+  // after assignment
+}
+```
+一旦有了赋值, 时间就找到了空隙, 可以对我们代码的执行产生影响.或许是在此刻, 或许是在明天, 或许是在appDidFinishLaunch...等. 每一个赋值操作都是一颗种子, 可以结出新feature或者新bug.
+变量会随着时间变化, 有状态的函数也会随着时间的流动产出不同的输出, **Pure Function**却是对时间免疫的,纯函数没有状态, 无论站在多长的时间跨度去执行一个纯函数, 它所输出的结果永远不会改变, 从这一角度看, 纯函数是处于永恒的禁止状态.
+
+###空间
+如果把一个线程看成一个独立的空间, 在程序的世界当中, 空间会产生交叉重叠.一个变量如果可以被两个线程同时访问, 它的值如果在可以在两个空间发生变化(交叉), 这个变量同样变得很危险.
+
+**Pure Function**同样是对空间免疫的, 无论多少个线程同时执行一个纯函数, 纯函数总是产生相同的输出, 而且不会对外部环境产生任何干扰.
+
+多线程的bug调试起来非常困难, 因为我们的大脑并不擅长多路并非的思考方式, 而函数式编程可以帮我们解决这一个疼点， 每个纯函数都是线程安全的.
+
+###离不开的状态
+函数式编程通过**Pure Function**使得我们的代码经的起时间和空间的考验.
+
+我们可以把一个App的代码按照函数式编程的方式, 打散成为一个个合格的**pure function**, 再通过某种方式串联起来,更方便的串联函数, 需要把函数变为一等公民, 需要能像使用变量一样方便的使用函数.
+
+一个**pure function**可以是**stateless**的, 但我们App可以变成**stateless**吗?显然不能.
+
+离开了变量和状态,我们很难完整的描述业务.用户购物车里的商品总是会发生变化, 今天或明天, 我们总是需要在一个地方接受这种变化, 保存这种变化, 继而反应这种变化. 所以,大多数时候, 我们离不开状态, 但我们能做的是， 将一定会发生的变化,锁定在尽可能小的时间和空间维度只能, 通过改变代码的组织方式或者架构, 将必须改变的难以管教的状态, 囚禁在特定的模块代码之中, 让不可控变得尽量可控.
+
+其实, 即使不严格遵从函数式编程, 我们同样可以写出带有**Functional Programming**精髓的代码, 一切的一切, 都是对于状态的理解.
+
+在我看来, **NSMutableArray的copy**也是颇具函数式编程精髓的.
+
+##一等公民(First Class)
+
+当我们将函数改造成为**pure function**之后, 会产生一些奇妙的化学连锁反应, 这些反应甚至会改变我们的编程习惯. 一旦我们有了绝对安全的纯函数, 我们当然希望能尽最大可能的去发挥它的价值, 增加它出现和被使用的场景。为了加大纯函数的使用率, 我们需要在语言层面做一些改造或者增强, 以提高纯函数传递性.怎么增强呐？ 答案是将函数变为**一等公民**.
+
+**何谓公民? 有身份证才叫公民, 有身份证还能自由的迁徙就叫一等公民**
+
+当我们的变量可以指向函数时, 这个变量就有了函数的身份.当我们把这个变量当做函数的参数传入, 或者函数的返回值传出的时候, 这个变量就有了自由迁徙的能力.
+
+一个函数A， 可以接受另一个函数B作为参数, 然后再返回第三个函数C作为返回值.类似下面的一段swift代码:
+
+```c
+func funcA(funcB: @escaping (Int)->Int) -> (Int) -> Int {
+    return {
+        input in
+        return funcB(input)
+    }
+}
+```
+
+在funcA的定义里, funcB作为参数传入, func(匿名)作为返回值返回。 funcB和func在这个语境里就称之为**first class function**, 而funcA作为funcB和funC的管理者, 有个更高端的称谓:**high order function**.
+
+有了**first class function**和**high order function**,我们还会收获另一个成果, 语言的表达力更灵活, 更简洁, 更强大。 举个例子, 我们写一段代码来实现一个功能： 参加party前选一件衣服, 用传统的方式来写:
+
+```c
+func choseColor(gender: Int) -> Int {
+	return 0
+}
+
+func dressup(dressColor: Int) -> Int {
+	return 1
+}
+
+/// imperative(必要的)
+let dressColor = choseColor(gender: 1)
+let dress = dressup(dressColor: dressColor)
+user.dress = dress
+```
+先定义函数, 再分三步依次调用**dressColor**, **dressup**, 然后赋值.
+如果用**first class function**和**high order function**的方式来写就是:
+
+```c
+func gotoParty(dressup: @escaping (Int)->Int, choseColor: @escaping(Int)->Int) -> (Int)->Int {
+    return {
+        gender in
+        let dressColor = choseColor(gender)
+        return dressup(dressColor)
+    }
+}
+
+let prepare = gotoParty(dressup: {
+    color in
+    return 1
+}, choseColor: { gender in
+    return 0
+})
+user.dress = prepare(1)
+
+```
+gotoParty函数柔和了dressup和chooseColor, gotoParty成了一个**high order function**，当我们读gotoParty的代码的时候, 这单一一个函数就将我们的目的和结果都表明了.
+
+这就是**high order function**的神奇之处, 原先啰啰嗦嗦的几乎话变成了一句话就说清楚了, 它更接近我们的自然语言的表达方式.注意**functional programming**并不会减少我们的代码量，它改变的只是我们书写代码的方式.
+
+这种更为强大的表达力我们也有个行话来称呼它，`declarative programming(声明式编程)`, 我们的传统的代码的代码表达方式(OOP当中所使用的方式), 则叫做`imperative programming(命令式编程)`.
+
+`imperative programming(命令式编程)`更强调实现的步骤,而`declarative programming(声明式编程)`则重在表达我们想要的结果,这句话理解起来可能有些抽象, 实在理解不了也没啥关系, 只要记住`declarative programming(声明式编程)`能更简洁精练的表达我们的想要的结果即可.
+
+以上都是我们将function变为一等公民所产生的结果, 这一改变还有更多的妙用， 比如**lazy evaluation**
+
+上述代码中的dressup和choseColor虽然都是function, 但是他们在传入gotoParty的时候并不会立即执行(evaluation), 而是gotoParty被执行的时候再一起执行.这也很大程度上增强了我们的表达能力, dressup和chossColor都具备了**lazy evaluation**的属性, 可以被拼装, 被delay， 最后在某一个时刻才被执行.
+
+所以, **functional programming**改变了我们使用函数的方式, 之前使用OOP, 我们对于怎么处理变量(定义变量, 修改值, 传递值, 等)轻车熟路,到了函数式编程的世界, 我们将要学会如何同函数打交道了, 要像能使用变量一样灵活自如的使用函数, 这在刚开始的时候需要一段适应期.
+
+

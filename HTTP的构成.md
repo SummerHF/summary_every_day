@@ -111,6 +111,101 @@ GET /res/static/thirdparty/connect.jpg?a=1&b=2 HTTP/1.1
 ```
 URL的解析也自有一套规范,我们需要特别注意的是**query string**部分.我们平时编写业务代码的时候,可能会在**query string**当中塞入自己的数据,这些数据可能是任意形式的字节流,而**Request Line**和**URI**的解析都依赖于一些特殊字符来做分割,比如空格,/;?等等,所以为了能正确,安全的解析整个**Request Line**和**URI**,我们需要对**query string**中的字节流做进一步的编码约束,只允许其中出现安全的**ASCLL**码,这也是我们为甚么**UriEncode**的原因.
 
+**UriEncode**的过程也比较简单, 它将字节流中的所有字节, 对照ASCLL码表分为, 安全的ASCLL码和不安全的ASCLL码. 安全的ASCLL码不用做任何处理, 不安全的ASCLL码(比如空格0X20)则做进一步的编码处理, 编码的思路也简单: 用安全的ASCLL码来代替不安全的ASCLL码.比如空格(0x20)被编码为%20, 由一个ASCLL码(空格)变成了三个ASCLL码(%, 2, 0).对于原本就不是ASCLL码的内容来说,比如中文,则先以UTF-8编码成字节流,再对照ASCLL码做编码. 比如中文[高], 其UTF-8的形式为**\xE9\xAB\x98**, 再进一步做ASCLL编码, 最后URIEncode的结果就是:**%E9%AB%98**.
 
+由此可见, URIEncode是出于uri安全解析的需要, Encode的结果是由%和一部分安全的ASCll码所组成.URIEncode的缺点也比较明显, Encode非ASCLL码的时候, 比如中文, 一个字节会被Encode成3个字节,长度整整是用来的3倍,造成流量的浪费.
 
+####Header的解析
+对于Header的解析可以先按CRLF分隔成一个个的键值对, 键值对里面的值, 也就是我们所说的**field content**其实也有编码要求. [RFC 7230](https://tools.ietf.org/html/rfc7230#section-3.2.4)中有阐述:
+
+```c
+Historically, HTTP has allowed field content with text in the ISO-8859-1 charset [ISO-8859-1], supporting other charsets only through use of [RFC2047] encoding. In practice, most HTTP header field values use only a subset of the US-ASCII charset [USASCII]. Newly defined header fields SHOULD limit their field values to US-ASCII octets. A recipient SHOULD treat other octets in field content (obs-text) as opaque data.
+```
+简单来说, 我们在实际使用当中使用ASCll码来限制field content.我们常用几个field, 诸如Host, User-Agent等, 使用ASCll码字符也已绰绰有余. 一般不会对值做进一步encode处理.
+
+####Body的解析
+body的解析是我们平时打交道最多的部分, 不是说我们需要知道如何去解析body, 而是要了解body里的数据格式.
+
+body的解析本身比较简单, 从header中知道**Content-length**之后, 读取固定长度的字节流即完成了body的获取, 关键的环节是获取之后, 如何读取其中的数据并递交给应用层, 所以HTTP协议本身并没有对Body中的内容编码做约束, 而是把它交给协议的使用者去决定, 我们甚至可以在body里存放二进制流, 对应的Content-Type为**application/octet-stream**.
+
+我们来看看平时发送HTTP请求时, 以**AFNetworking**为例, 使用最频繁的几种**Content-type**:
+
+* multipart/form-data
+* application/x-www-form-urlencoded
+* application/json
+
+当我们向Server发送数据的时候, 需要和Server约定好所使用的**Content-type**, 客户端在发送Request的时候也要注意API的差别, 以**AFNetworking**为例
+
+* 发送json则使用:
+
+```c
+AFJSONRequestSerializer* jsonSerializer = [AFJSONRequestSerializer serializer];
+request = [jsonSerializer requestWithMethod:@"POST" URLString:requestUrl parameters:requestParams error:nil];
+```
+
+* 发送multipart/form-data:
+
+```c
+request = [self.requestSerializer multipartFormRequestWithMethod:@"POST" URLString:requestUrl parameters:requestParams constructingBodyWithBlock:nil error:nil];
+```
+
+* 发送x-www-form-urlencoded:
+
+```c
+request = [self.requestSerializer requestWithMethod:@"POST" URLString:requestUrl parameters:requestParams error:nil];
+
+```
+json不用多说, 大家都非常熟悉的数据交换格式. **multipart/form-data** 和 **x-www-form-urlencoded** 比较容易引起混淆.
+
+AFNetworking中有这样一段代码：
+
+```c
+//AFURLRequestSerialization
+if (![mutableRequest valueForHTTPHeaderField:@"Content-Type"]) {
+    [mutableRequest setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
+}
+```
+可见当我们的Request没有设置Content-Type的时候, 默认使用的就是**application/x-www-form-urlencoded**. 这里的**URIEncode**和前面的**Request-URI**中的URIEncode是一回事, 只不过encode的是body体当中的内容.
+
+那我们什么时候应该使用**application/x-www-form-urlencoded**,什么时候使用**multipart/form-data**？
+
+先来看下使用**Content-type**为**multipart/form-data**时, 我们的request有什么变化, 下图是使用**mitmproxy**抓包一个文件上传Request的header示意图:
+
+![](https://ws1.sinaimg.cn/large/006tNc79gy1frcwash2xwj30he05a3yp.jpg)
+
+Content-type的完整值是：
+
+```c
+multipart/form-data; boundary=Boundary+2BBBEA582E48968C
+```
+
+multipart将body体分成多个块, 多个块之间依赖于boundary值做分隔, 所以生成的boundary要足够长,长到在字节流当中出现重复的概率几乎为0, 否则就会导致传输的错误， AFNetworking中生成boundary的方法如下:
+
+```c
+static NSString * AFCreateMultipartFormBoundary() {
+    return [NSString stringWithFormat:@"Boundary+%08X%08X", arc4random(), arc4random()];
+}
+```
+
+我们可以看下一个例子, 如果使用**multipart/form-data**, body中具体的数据格式:
+
+```
+Boundary+2BBBEA582E48968C
+Content-Disposition: form-data; name="text1"
+text
+Boundary+2BBBEA582E48968C
+Content-Disposition: form-data; name="text2"
+another text
+```
+可以看到在body中多出**Boundary+2BBBEA582E48968C**和**Content-Disposition**， 这些会增加body的传输大小.
+
+假设我们有一个大文件需要上传, 如果我们使用**application/x-www-form-urlencoded**作为**Content-type** ,由于字节流当中存在非常多的非ASCLL码, 文件的长度会变为原来的2-3倍,所以此时
+**multipart/form-data**更合适.
+
+假设我们只有少量的键值对需要上传, 如果使用**multipart/form-data**作为**Content-type**, 由于**Boundary和Content-Disposition**带来的额外流量,又显的得不偿失,所以此时使用**application/x-www-form-urlencoded**更为合适.
+
+这也是为什么我们使用**multipart/form-data**作为文件类Request的Content-type, 而对于普通业务数据,则使用**application/x-www-form-urlencoded**或者**application/json**.
+
+##总结
+上述的分析, 更多的是站在客户端的角度去看的, 实际HTTP协议的构成细节非常之多, 需要旷日持久的深入学习和积累. **功夫越深, 坑越少**
 
