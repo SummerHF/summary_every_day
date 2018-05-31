@@ -79,4 +79,34 @@ class Test {
 在内部定义一个私有类nested, 只要我们不通过属性shared的创建实例, 就不会触发swift运行时调用Nested,也就不会像解法三那样因为用到了Singleton的静态方法而自动创建实例了,做到了真正的按需创建,从而避免降低内存的实用效率. 通俗的一点说就是你都还没有用到实例, 因为调用了一个该类的静态方法,就自动的创建了该类的实例,造成了内存的浪费。
 ```
 
+##面试题3: 二维数组中的查找
+在一个二维数组中， 每一行都按照从左到右递增的顺序排序, 每一列都按照从上到下递增的顺序排序.请完成一个函数，输入这样的一个二维数组, 判断数组中是否含有该整数.
+
+```
+#define FAILURE 0 
+#define SUCCESS 1 
+#define Error 2
+
+int Find(int *matrix, int rows, int columns, int value) {
+    int find = FAILURE;
+    if (matrix != NULL && rows > 0 && columns > 0) {
+        int row = 0;
+        int column = columns -1;
+        /// 限定条件
+        while (row < rows && column >= 0) {
+            int compare_value = matrix[row * columns + column];
+            if (compare_value == value) {
+                find = SUCCESS;
+                break;
+            } else if (compare_value > value) {
+                column--;
+            } else {
+                row++;
+            }
+        }
+    }
+    return find;
+} 
+```
+
 
