@@ -1,4 +1,4 @@
-[TOC]
+
 #箭指Offer
 
 ##面试题2: 实现Singleton
